@@ -4,3 +4,4 @@ pymongo
 python-multipart
 jinja2
 passlib[bcrypt]
+bcrypt==4.0.1

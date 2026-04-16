@@ -1,0 +1,357 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Student Notes App</title>
+
+<style>
+body {
+    margin: 0;
+    font-family: 'Segoe UI', sans-serif;
+    background: #f1f5f9;
+}
+
+/* 🔹 Navbar */
+.navbar {
+    background: linear-gradient(90deg,#4f46e5,#3b82f6);
+    color: white;
+    padding: 12px 25px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.nav-links span {
+    margin-right: 20px;
+    cursor: pointer;
+}
+
+/* Profile */
+.profile {
+    position: relative;
+    cursor: pointer;
+}
+
+.profile img {
+    width: 35px;
+    border-radius: 50%;
+}
+
+.dropdown {
+    position: absolute;
+    right: 0;
+    top: 45px;
+    background: white;
+    color: black;
+    padding: 10px;
+    border-radius: 8px;
+    display: none;
+}
+
+.dropdown button {
+    background: red;
+    color: white;
+    border: none;
+    padding: 8px;
+    width: 100%;
+}
+
+/* Container */
+.container {
+    max-width: 900px;
+    margin: 30px auto;
+}
+
+/* Sections */
+.section { display: none; }
+.active { display: block; }
+
+/* Card */
+.card {
+    background: white;
+    padding: 20px;
+    border-radius: 12px;
+    margin-bottom: 20px;
+}
+
+/* Inputs */
+input, button {
+    width: 100%;
+    padding: 10px;
+    margin-top: 10px;
+}
+
+button {
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+}
+
+/* Buttons */
+.primary { background:#4f46e5; color:white; }
+.view { background:green; color:white; }
+.delete { background:red; color:white; }
+
+/* Auth */
+.auth-box {
+    max-width: 400px;
+    margin: 80px auto;
+    background: white;
+    padding: 25px;
+    border-radius: 12px;
+}
+
+/* Tabs */
+.tabs {
+    display: flex;
+    margin-bottom: 10px;
+}
+
+.tabs button {
+    flex: 1;
+    padding: 10px;
+    cursor: pointer;
+}
+
+.active-tab {
+    background: #4f46e5;
+    color: white;
+}
+
+/* Messages */
+.msg {
+    margin-top: 10px;
+    font-weight: 500;
+}
+</style>
+
+</head>
+
+<body>
+
+<!-- 🔹 Navbar -->
+<div id="navbar" class="navbar" style="display:none;">
+    <div class="nav-links">
+        <span onclick="showSection('upload')">Upload</span>
+        <span onclick="showSection('notes')">View</span>
+        <span onclick="showSection('about')">About</span>
+    </div>
+
+    <div class="profile" onclick="toggleDropdown()">
+        <img src="https://cdn-icons-png.flaticon.com/512/149/149071.png">
+        <div id="dropdown" class="dropdown">
+            <p id="userEmail"></p>
+            <button onclick="logout()">Logout</button>
+        </div>
+    </div>
+</div>
+
+<!-- 🔹 AUTH -->
+<div id="auth" class="auth-box">
+
+    <div class="tabs">
+        <button id="loginTab" class="active-tab" onclick="switchTab('login')">Login</button>
+        <button id="signupTab" onclick="switchTab('signup')">Signup</button>
+    </div>
+
+    <!-- Login -->
+    <div id="loginForm">
+        <input id="loginEmail" placeholder="Email">
+        <input id="loginPassword" type="password" placeholder="Password">
+        <button class="primary" onclick="login()">Login</button>
+    </div>
+
+    <!-- Signup -->
+    <div id="signupForm" style="display:none;">
+        <input id="signupEmail" placeholder="Email">
+        <input id="signupPassword" type="password" placeholder="Password">
+        <button class="primary" onclick="signup()">Signup</button>
+    </div>
+
+    <p id="msg" class="msg"></p>
+
+</div>
+
+<!-- 🔹 MAIN APP -->
+<div id="app" class="container" style="display:none;">
+
+    <!-- Upload -->
+    <div id="upload" class="section active card">
+        <h3>Upload Notes</h3>
+        <input id="title" placeholder="Title">
+        <input type="file" id="file">
+        <button class="primary" onclick="upload()">Upload</button>
+        <p id="uploadMsg" class="msg"></p>
+    </div>
+
+    <!-- Notes -->
+    <div id="notes" class="section card">
+        <h3>My Notes</h3>
+        <div id="notesList"></div>
+    </div>
+
+    <!-- About -->
+    <div id="about" class="section card">
+        <h3>About</h3>
+        <p>This app helps students upload and access notes anytime.</p>
+    </div>
+
+</div>
+
+<script>
+let userId = "";
+let userEmail = "";
+
+/* Tabs */
+function switchTab(tab){
+    loginForm.style.display = tab === "login" ? "block" : "none";
+    signupForm.style.display = tab === "signup" ? "block" : "none";
+
+    loginTab.classList.toggle("active-tab", tab==="login");
+    signupTab.classList.toggle("active-tab", tab==="signup");
+
+    msg.innerText="";
+}
+
+/* Dropdown */
+function toggleDropdown(){
+    let d = dropdown;
+    d.style.display = d.style.display === "block" ? "none" : "block";
+}
+
+/* Sections */
+function showSection(id){
+    document.querySelectorAll(".section").forEach(s=>s.classList.remove("active"));
+    document.getElementById(id).classList.add("active");
+
+    if(id==="notes") loadNotes();
+}
+
+/* Signup */
+async function signup(){
+    let res = await fetch("/auth/signup", {
+        method:"POST",
+        headers:{'Content-Type':'application/json'},
+        body: JSON.stringify({
+            email: signupEmail.value,
+            password: signupPassword.value
+        })
+    });
+
+    let data = await res.json();
+
+    if(!res.ok){
+        msg.innerText = data.detail;
+        msg.style.color = "red";
+    } else {
+        msg.innerText = "Signup successful, now login";
+        msg.style.color = "green";
+    }
+}
+
+/* Login */
+async function login(){
+    let res = await fetch("/auth/login", {
+        method:"POST",
+        headers:{'Content-Type':'application/json'},
+        body: JSON.stringify({
+            email: loginEmail.value,
+            password: loginPassword.value
+        })
+    });
+
+    let data = await res.json();
+
+    if(!res.ok){
+        msg.innerText = data.detail;
+        msg.style.color = "red";
+        return;
+    }
+
+    userId = data.user_id;
+    userEmail = data.email;
+
+    auth.style.display="none";
+    app.style.display="block";
+    navbar.style.display="flex";
+
+    document.getElementById("userEmail").innerText = userEmail;
+}
+
+/* Logout */
+function logout(){
+    userId="";
+    auth.style.display="block";
+    app.style.display="none";
+    navbar.style.display="none";
+}
+
+/* Upload */
+async function upload(){
+    let msgBox = uploadMsg;
+
+    if(!title.value || !file.files[0]){
+        msgBox.innerText = "Enter title and file";
+        msgBox.style.color = "red";
+        return;
+    }
+
+    msgBox.innerText = "Uploading...";
+    msgBox.style.color = "blue";
+
+    let formData = new FormData();
+    formData.append("title", title.value);
+    formData.append("file", file.files[0]);
+    formData.append("user_id", userId);
+
+    let res = await fetch("/notes/upload", {
+        method:"POST",
+        body:formData
+    });
+
+    if(res.ok){
+        msgBox.innerText = "✅ Uploaded successfully!";
+        msgBox.style.color = "green";
+        title.value="";
+        file.value="";
+    } else {
+        msgBox.innerText = "Upload failed";
+        msgBox.style.color = "red";
+    }
+}
+
+/* Load notes */
+async function loadNotes(){
+    let res = await fetch(`/notes/${userId}`);
+    let data = await res.json();
+
+    let html="";
+    data.forEach(n=>{
+        html += `
+        <div class="card">
+            ${n.title}
+            <div>
+                <button class="view" onclick="view('${n.id}')">View</button>
+                <button class="delete" onclick="del('${n.id}')">Delete</button>
+            </div>
+        </div>`;
+    });
+
+    notesList.innerHTML = html;
+}
+
+/* View */
+function view(id){
+    window.open(`/notes/view/${id}`);
+}
+
+/* Delete */
+async function del(id){
+    if(!confirm("Delete this note?")) return;
+
+    await fetch(`/notes/${id}`, {method:"DELETE"});
+    loadNotes();
+}
+</script>
+
+</body>
+</html>

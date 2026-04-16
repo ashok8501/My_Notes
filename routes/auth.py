@@ -5,38 +5,71 @@ from passlib.hash import bcrypt
 router = APIRouter()
 
 
-# 🔹 Signup
+# 🔹 SIGNUP
 @router.post("/signup")
 def signup(user: dict):
-    if not user.get("email") or not user.get("password"):
-        raise HTTPException(status_code=400, detail="All fields are required")
+    try:
+        email = user.get("email")
+        password = user.get("password")
 
-    existing = users_collection.find_one({"email": user["email"]})
-    if existing:
-        raise HTTPException(status_code=400, detail="User already exists")
+        # Validation
+        if not email or not password:
+            raise HTTPException(status_code=400, detail="All fields are required")
 
-    user["password"] = bcrypt.hash(user["password"])
-    users_collection.insert_one(user)
+        # Check existing user
+        existing_user = users_collection.find_one({"email": email})
+        if existing_user:
+            raise HTTPException(status_code=400, detail="User already exists")
 
-    return {"message": "Signup successful"}
+        # Hash password
+        hashed_password = bcrypt.hash(password)
+
+        # Insert into DB
+        users_collection.insert_one({
+            "email": email,
+            "password": hashed_password
+        })
+
+        return {"message": "Signup successful"}
+
+    except HTTPException as e:
+        raise e
+
+    except Exception as e:
+        print("Signup Error:", e)   # 👈 check this in Render logs
+        raise HTTPException(status_code=500, detail="Internal Server Error")
 
 
-# 🔹 Login
+# 🔹 LOGIN
 @router.post("/login")
 def login(user: dict):
-    if not user.get("email") or not user.get("password"):
-        raise HTTPException(status_code=400, detail="All fields are required")
+    try:
+        email = user.get("email")
+        password = user.get("password")
 
-    db_user = users_collection.find_one({"email": user["email"]})
+        # Validation
+        if not email or not password:
+            raise HTTPException(status_code=400, detail="All fields are required")
 
-    if not db_user:
-        raise HTTPException(status_code=404, detail="User not found")
+        db_user = users_collection.find_one({"email": email})
 
-    if not bcrypt.verify(user["password"], db_user["password"]):
-        raise HTTPException(status_code=401, detail="Invalid password")
+        # User not found
+        if not db_user:
+            raise HTTPException(status_code=404, detail="User not found")
 
-    return {
-        "message": "Login successful",
-        "user_id": str(db_user["_id"]),
-        "email": db_user["email"]
-    }
+        # Wrong password
+        if not bcrypt.verify(password, db_user["password"]):
+            raise HTTPException(status_code=401, detail="Invalid password")
+
+        return {
+            "message": "Login successful",
+            "user_id": str(db_user["_id"]),
+            "email": db_user["email"]
+        }
+
+    except HTTPException as e:
+        raise e
+
+    except Exception as e:
+        print("Login Error:", e)   # 👈 check in logs
+        raise HTTPException(status_code=500, detail="Internal Server Error")

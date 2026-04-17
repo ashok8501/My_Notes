@@ -1,17 +1,13 @@
 from fastapi import APIRouter, UploadFile, File, Form, HTTPException
-from fastapi.responses import FileResponse
+from fastapi.responses import Response
 from bson import ObjectId
-import shutil, os
 
 from database import notes_collection
 
 router = APIRouter()
 
-UPLOAD_FOLDER = "files"
-os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 
-
-# 🔹 Upload Note (Dynamic Subject)
+# 🔹 Upload Note (STORE FILE IN DB)
 @router.post("/upload")
 async def upload_note(
     title: str = Form(...),
@@ -20,19 +16,16 @@ async def upload_note(
     file: UploadFile = File(...)
 ):
     try:
-        file_path = os.path.join(UPLOAD_FOLDER, file.filename)
+        # read file as binary
+        file_data = await file.read()
 
-        with open(file_path, "wb") as buffer:
-            shutil.copyfileobj(file.file, buffer)
-
-        # normalize subject (important)
         subject = subject.strip().title()
 
         note = {
             "title": title,
             "subject": subject,
             "filename": file.filename,
-            "filepath": file_path,
+            "file_data": file_data,   # 🔥 IMPORTANT CHANGE
             "user_id": user_id,
             "is_bookmarked": False
         }
@@ -42,7 +35,7 @@ async def upload_note(
         return {"id": str(result.inserted_id)}
 
     except Exception as e:
-        print(e)
+        print("Upload Error:", e)
         raise HTTPException(status_code=500, detail="Upload failed")
 
 
@@ -50,6 +43,9 @@ async def upload_note(
 @router.put("/bookmark/{note_id}")
 def toggle_bookmark(note_id: str):
     note = notes_collection.find_one({"_id": ObjectId(note_id)})
+
+    if not note:
+        raise HTTPException(status_code=404, detail="Not found")
 
     new_status = not note.get("is_bookmarked", False)
 
@@ -78,11 +74,18 @@ def get_notes(user_id: str):
     return result
 
 
-# 🔹 View Note
+# 🔹 View Note (FROM DB)
 @router.get("/view/{note_id}")
 def view_note(note_id: str):
     note = notes_collection.find_one({"_id": ObjectId(note_id)})
-    return FileResponse(note["filepath"])
+
+    if not note:
+        raise HTTPException(status_code=404, detail="Note not found")
+
+    return Response(
+        content=note["file_data"],   # 🔥 IMPORTANT
+        media_type="application/pdf"
+    )
 
 
 # 🔹 Delete Note
@@ -90,8 +93,8 @@ def view_note(note_id: str):
 def delete_note(note_id: str):
     note = notes_collection.find_one({"_id": ObjectId(note_id)})
 
-    if os.path.exists(note["filepath"]):
-        os.remove(note["filepath"])
+    if not note:
+        raise HTTPException(status_code=404, detail="Not found")
 
     notes_collection.delete_one({"_id": ObjectId(note_id)})
 

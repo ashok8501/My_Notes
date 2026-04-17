@@ -39,10 +39,6 @@ Frontend: HTML, CSS, JavaScript
 Server: Uvicorn
 
 
-
-📁 Project Structure
-notes-app/│├── main.py├── database.py├── routers/│   └── notes.py│├── templates/│   └── index.html│├── static/│   └── styles.css│└── README.md
-
 ⚙️ Installation & Setup
 1️⃣ Clone the repository
 git clone https://github.com/your-username/notes-app.gitcd notes-app

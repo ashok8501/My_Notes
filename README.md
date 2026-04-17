@@ -130,15 +130,3 @@ Feel free to fork this repo and improve the project. Pull requests are welcome!
 
 📄 License
 This project is open-source and available under the MIT License.
-
-If you want, I can also:
-
-
-Customize this README with your GitHub username
-
-
-Add screenshots section
-
-
-Or generate a perfect project description for resume 👍
-

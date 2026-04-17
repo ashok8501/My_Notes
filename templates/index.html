@@ -19,7 +19,7 @@ body {
     padding: 12px 20px;
     display: flex;
     justify-content: space-between;
-    flex-wrap: wrap; /* NEW */
+    flex-wrap: wrap;
 }
 
 .profile {
@@ -44,8 +44,8 @@ body {
 
 .container {
     max-width: 700px;
-    width: 95%;              /* NEW */
-    margin: 20px auto;       /* UPDATED */
+    width: 95%;
+    margin: 20px auto;
     padding: 10px;
 }
 
@@ -63,16 +63,16 @@ input {
     width: 100%;
     padding: 10px;
     margin-top: 10px;
-    font-size: 14px; /* NEW */
+    font-size: 14px;
 }
 
 button {
-    padding: 8px 12px;  /* UPDATED */
+    padding: 8px 12px;
     border-radius: 6px;
     border: none;
     cursor: pointer;
     margin-left: 5px;
-    font-size: 14px; /* NEW */
+    font-size: 14px;
 }
 
 .primary { background:#4f46e5; color:white; width: 100%; }
@@ -81,7 +81,7 @@ button {
 
 .note {
     display: flex;
-    flex-direction: column;   /* IMPORTANT FIX */
+    flex-direction: column;
     align-items: flex-start;
 }
 
@@ -123,7 +123,7 @@ button {
     border-radius:8px;
 }
 
-/* 🔥 MOBILE FIX */
+/* Mobile */
 @media (max-width: 600px) {
 
     h3 {
@@ -152,9 +152,9 @@ button {
 
 <div id="navbar" class="navbar" style="display:none;">
     <div>
-        <span onclick="showSection('upload')" style="cursor:pointer;">Upload</span>
-        <span onclick="showSection('notes')" style="margin-left:10px; cursor:pointer;">Notes</span>
-        <span onclick="showSection('about')" style="margin-left:10px; cursor:pointer;">About</span>
+        <span onclick="showSection('upload')">Upload</span>
+        <span onclick="showSection('notes')" style="margin-left:10px;">Notes</span>
+        <span onclick="showSection('about')" style="margin-left:10px;">About</span>
     </div>
 
     <div class="profile" onclick="toggleDropdown()">
@@ -169,8 +169,8 @@ button {
 <div id="auth" class="auth-box">
 
     <div class="tabs">
-        <button id="loginTab" class="active-tab" onclick="switchTab('login')">Login</button>
-        <button id="signupTab" onclick="switchTab('signup')">Signup</button>
+        <button onclick="switchTab('login')" class="active-tab">Login</button>
+        <button onclick="switchTab('signup')">Signup</button>
     </div>
 
     <div id="loginForm">
@@ -185,7 +185,7 @@ button {
         <button class="primary" onclick="signup()">Signup</button>
     </div>
 
-    <p id="msg" class="msg"></p>
+    <p id="msg"></p>
 </div>
 
 <div id="app" class="container" style="display:none;">
@@ -194,10 +194,10 @@ button {
     <div id="upload" class="section active card">
         <h3>Upload Notes</h3>
         <input id="title" placeholder="Title">
-        <input id="subject" placeholder="Enter Subject (e.g. DBMS)"> <!-- NEW -->
+        <input id="subject" placeholder="Enter Subject">
         <input type="file" id="file">
         <button class="primary" onclick="upload()">Upload</button>
-        <p id="uploadMsg" class="msg"></p>
+        <p id="uploadMsg"></p>
     </div>
 
     <!-- Notes -->
@@ -207,7 +207,7 @@ button {
             <h3>Notes</h3>
 
             <div style="position:relative;">
-                <span onclick="toggleMenu()" style="cursor:pointer;">⋮</span>
+                <span onclick="toggleMenu()">⋮</span>
 
                 <div id="menuDropdown" class="menu">
                     <p onclick="showBookmarks()">⭐ Bookmarks</p>
@@ -221,28 +221,14 @@ button {
         <div id="notesList"></div>
     </div>
 
+    <!-- About -->
     <div id="about" class="section card">
-    <h3>About</h3>
-
-    <p>
-        The Student Notes App is designed to help students manage their study materials in a simple and organized way. 
-        Instead of searching through scattered files, students can upload and store all their notes in one place.
-    </p>
-
-    <p>
-        Notes can be grouped by subject, making it easy to find what you need quickly. 
-        Important notes can be bookmarked for faster access, especially during exams or revision time.
-    </p>
-
-    <p>
-        With features like search, quick file viewing, and structured organization, this app helps students save time, stay focused, 
-        and keep their study materials well organized.
-    </p>
-
-    <p>
-        Overall, it acts like a personal digital notebook where everything is easy to access, manage, and reuse whenever needed.
-    </p>
-</div>
+        <h3>About</h3>
+        <p>
+        The Student Notes App helps students organize, store, and access notes easily.
+        Group by subject, bookmark important files, and quickly view or download anytime.
+        </p>
+    </div>
 
 </div>
 
@@ -271,13 +257,10 @@ function showSection(id){
 }
 
 async function signup(){
-    let res = await fetch("/auth/signup", {
+    let res = await fetch("/auth/signup",{
         method:"POST",
         headers:{'Content-Type':'application/json'},
-        body: JSON.stringify({
-            email: signupEmail.value,
-            password: signupPassword.value
-        })
+        body: JSON.stringify({email: signupEmail.value,password: signupPassword.value})
     });
 
     let data = await res.json();
@@ -285,13 +268,10 @@ async function signup(){
 }
 
 async function login(){
-    let res = await fetch("/auth/login", {
+    let res = await fetch("/auth/login",{
         method:"POST",
         headers:{'Content-Type':'application/json'},
-        body: JSON.stringify({
-            email: loginEmail.value,
-            password: loginPassword.value
-        })
+        body: JSON.stringify({email: loginEmail.value,password: loginPassword.value})
     });
 
     let data = await res.json();
@@ -307,7 +287,7 @@ async function login(){
     app.style.display="block";
     navbar.style.display="flex";
 
-    document.getElementById("userEmail").innerText = data.email;
+    userEmail.innerText = data.email;
 }
 
 function logout(){
@@ -317,15 +297,12 @@ function logout(){
 }
 
 async function upload(){
-
     if(!title.value || !subject.value || !file.files[0]){
-        uploadMsg.innerText = "Please fill all fields";
-        uploadMsg.style.color = "red";
+        uploadMsg.innerText = "Fill all fields";
         return;
     }
 
     uploadMsg.innerText = "Uploading...";
-    uploadMsg.style.color = "blue";
 
     let f = new FormData();
     f.append("title",title.value);
@@ -333,31 +310,14 @@ async function upload(){
     f.append("file",file.files[0]);
     f.append("user_id",userId);
 
-    try {
-        let res = await fetch("/notes/upload",{
-            method:"POST",
-            body:f
-        });
+    let res = await fetch("/notes/upload",{method:"POST",body:f});
 
-        if(res.ok){
-            uploadMsg.innerText = "Uploaded successfully ✅";
-            uploadMsg.style.color = "green";
-
-            // clear inputs
-            title.value="";
-            subject.value="";
-            file.value="";
-
-            loadNotes();
-        } else {
-            uploadMsg.innerText = "Upload failed ❌";
-            uploadMsg.style.color = "red";
-        }
-
-    } catch(err){
-        uploadMsg.innerText = "Server error ❌";
-        uploadMsg.style.color = "red";
-        console.log(err);
+    if(res.ok){
+        uploadMsg.innerText = "Uploaded successfully ✅";
+        title.value=""; subject.value=""; file.value="";
+        loadNotes();
+    } else {
+        uploadMsg.innerText = "Upload failed ❌";
     }
 }
 
@@ -368,80 +328,69 @@ async function loadNotes(){
     renderNotes(data);
 }
 
-/* 🔥 SUBJECT GROUPING */
 function renderNotes(notes){
-
     let grouped = {};
 
     notes.forEach(n=>{
         let sub = n.subject || "General";
-
-        if(!grouped[sub]){
-            grouped[sub] = [];
-        }
+        if(!grouped[sub]) grouped[sub]=[];
         grouped[sub].push(n);
     });
 
     let html="";
 
     for(let subject in grouped){
-
-        html += `<h4 style="margin-top:15px;">📁 ${subject}</h4>`;
+        html += `<h4>📁 ${subject}</h4>`;
 
         grouped[subject].forEach(n=>{
             html+=`
             <div class="card note">
                 <div>${n.title}</div>
-
                 <div>
-                    <span onclick="toggleBookmark('${n.id}')" style="cursor:pointer;">
-                        ${n.is_bookmarked ? "⭐":"☆"}
-                    </span>
-
-                    <button class="view" onclick="view('${n.id}')">View</button>
-                    <button class="delete" onclick="del('${n.id}')">Delete</button>
+                    <span onclick="toggleBookmark('${n.id}')">${n.is_bookmarked?"⭐":"☆"}</span>
+                    <button onclick="view('${n.id}')">View</button>
+                    <button onclick="downloadFile('${n.id}')">Download</button>
+                    <button onclick="del('${n.id}')">Delete</button>
                 </div>
             </div>`;
         });
     }
 
-    notesList.innerHTML = html;
+    notesList.innerHTML=html;
 }
 
 async function toggleBookmark(id){
-    let res = await fetch(`/notes/bookmark/${id}`, {method:"PUT"});
+    let res = await fetch(`/notes/bookmark/${id}`,{method:"PUT"});
+    let data = await res.json();
 
-    if(res.ok){
-        let data = await res.json();
+    allNotes = allNotes.map(n=>{
+        if(n.id===id) n.is_bookmarked=data.is_bookmarked;
+        return n;
+    });
 
-        allNotes = allNotes.map(n=>{
-            if(n.id===id){
-                n.is_bookmarked = data.is_bookmarked;
-            }
-            return n;
-        });
-
-        renderNotes(allNotes);
-    }
+    renderNotes(allNotes);
 }
 
 function filterNotes(){
-    let k=searchInput.value.toLowerCase();
-    let f=allNotes.filter(n=>n.title.toLowerCase().includes(k));
-    renderNotes(f);
+    let k = searchInput.value.toLowerCase();
+    renderNotes(allNotes.filter(n=>n.title.toLowerCase().includes(k)));
 }
 
 function showBookmarks(){
-    let f=allNotes.filter(n=>n.is_bookmarked);
-    renderNotes(f);
+    renderNotes(allNotes.filter(n=>n.is_bookmarked));
 }
 
 function view(id){
-    window.open(`/notes/view/${id}`);
+    let url = window.location.origin + `/notes/view/${id}`;
+    window.open(`https://docs.google.com/gview?embedded=true&url=${url}`);
+}
+
+function downloadFile(id){
+    window.open(`/notes/download/${id}`);
 }
 
 async function del(id){
-    await fetch(`/notes/delete/${id}`, {method:"DELETE"});
+    await fetch(`/notes/delete/${id}`,{method:"DELETE"});
     loadNotes();
 }
 </script>

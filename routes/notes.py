@@ -7,7 +7,7 @@ from database import notes_collection
 router = APIRouter()
 
 
-# 🔹 Upload Note (STORE FILE IN DB)
+# 🔹 Upload
 @router.post("/upload")
 async def upload_note(
     title: str = Form(...),
@@ -15,37 +15,25 @@ async def upload_note(
     user_id: str = Form(...),
     file: UploadFile = File(...)
 ):
-    try:
-        # read file as binary
-        file_data = await file.read()
+    file_data = await file.read()
 
-        subject = subject.strip().title()
+    note = {
+        "title": title,
+        "subject": subject.strip().title(),
+        "filename": file.filename,
+        "file_data": file_data,
+        "user_id": user_id,
+        "is_bookmarked": False
+    }
 
-        note = {
-            "title": title,
-            "subject": subject,
-            "filename": file.filename,
-            "file_data": file_data,   # 🔥 IMPORTANT CHANGE
-            "user_id": user_id,
-            "is_bookmarked": False
-        }
-
-        result = notes_collection.insert_one(note)
-
-        return {"id": str(result.inserted_id)}
-
-    except Exception as e:
-        print("Upload Error:", e)
-        raise HTTPException(status_code=500, detail="Upload failed")
+    result = notes_collection.insert_one(note)
+    return {"id": str(result.inserted_id)}
 
 
 # 🔹 Bookmark
 @router.put("/bookmark/{note_id}")
 def toggle_bookmark(note_id: str):
     note = notes_collection.find_one({"_id": ObjectId(note_id)})
-
-    if not note:
-        raise HTTPException(status_code=404, detail="Not found")
 
     new_status = not note.get("is_bookmarked", False)
 
@@ -62,40 +50,47 @@ def toggle_bookmark(note_id: str):
 def get_notes(user_id: str):
     notes = notes_collection.find({"user_id": user_id})
 
-    result = []
-    for n in notes:
-        result.append({
+    return [
+        {
             "id": str(n["_id"]),
             "title": n["title"],
             "subject": n.get("subject", "General"),
             "is_bookmarked": n.get("is_bookmarked", False)
-        })
+        }
+        for n in notes
+    ]
 
-    return result
 
-
-# 🔹 View Note (FROM DB)
+# 🔹 View (INLINE)
 @router.get("/view/{note_id}")
 def view_note(note_id: str):
     note = notes_collection.find_one({"_id": ObjectId(note_id)})
 
-    if not note:
-        raise HTTPException(status_code=404, detail="Note not found")
-
     return Response(
-        content=note["file_data"],   # 🔥 IMPORTANT
-        media_type="application/pdf"
+        content=note["file_data"],
+        media_type="application/pdf",
+        headers={
+            "Content-Disposition": f"inline; filename={note['filename']}"
+        }
     )
 
 
-# 🔹 Delete Note
-@router.delete("/delete/{note_id}")
-def delete_note(note_id: str):
+# 🔹 Download
+@router.get("/download/{note_id}")
+def download_note(note_id: str):
     note = notes_collection.find_one({"_id": ObjectId(note_id)})
 
-    if not note:
-        raise HTTPException(status_code=404, detail="Not found")
+    return Response(
+        content=note["file_data"],
+        media_type="application/pdf",
+        headers={
+            "Content-Disposition": f"attachment; filename={note['filename']}"
+        }
+    )
 
+
+# 🔹 Delete
+@router.delete("/delete/{note_id}")
+def delete_note(note_id: str):
     notes_collection.delete_one({"_id": ObjectId(note_id)})
-
     return {"message": "Deleted"}

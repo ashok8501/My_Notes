@@ -41,7 +41,7 @@ Server: Uvicorn
 
 ⚙️ Installation & Setup
 1️⃣ Clone the repository
-git clone https://github.com/your-username/notes-app.gitcd notes-app
+git clone https://github.com/ashok8501/My_Notes
 
 2️⃣ Create virtual environment
 python -m venv venv

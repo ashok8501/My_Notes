@@ -1,12 +1,9 @@
 from fastapi import APIRouter, UploadFile, File, Form, HTTPException
 from fastapi.responses import FileResponse
 from bson import ObjectId
-import shutil
-import os
-import mimetypes
+import shutil, os
 
 from database import notes_collection
-from schemas import note_serializer
 
 router = APIRouter()
 
@@ -14,65 +11,88 @@ UPLOAD_FOLDER = "files"
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 
 
-# 🔹 Upload Note
+# 🔹 Upload Note (Dynamic Subject)
 @router.post("/upload")
 async def upload_note(
     title: str = Form(...),
+    subject: str = Form(...),
     user_id: str = Form(...),
     file: UploadFile = File(...)
 ):
-    file_path = f"{UPLOAD_FOLDER}/{file.filename}"
+    try:
+        file_path = os.path.join(UPLOAD_FOLDER, file.filename)
 
-    with open(file_path, "wb") as buffer:
-        shutil.copyfileobj(file.file, buffer)
+        with open(file_path, "wb") as buffer:
+            shutil.copyfileobj(file.file, buffer)
 
-    note = {
-        "title": title,
-        "filename": file.filename,
-        "filepath": file_path,
-        "user_id": user_id
-    }
+        # normalize subject (important)
+        subject = subject.strip().title()
 
-    result = notes_collection.insert_one(note)
+        note = {
+            "title": title,
+            "subject": subject,
+            "filename": file.filename,
+            "filepath": file_path,
+            "user_id": user_id,
+            "is_bookmarked": False
+        }
 
-    return {"message": "Uploaded successfully", "id": str(result.inserted_id)}
+        result = notes_collection.insert_one(note)
+
+        return {"id": str(result.inserted_id)}
+
+    except Exception as e:
+        print(e)
+        raise HTTPException(status_code=500, detail="Upload failed")
 
 
-# 🔹 Get Notes for Logged-in User
-@router.get("/{user_id}")
+# 🔹 Bookmark
+@router.put("/bookmark/{note_id}")
+def toggle_bookmark(note_id: str):
+    note = notes_collection.find_one({"_id": ObjectId(note_id)})
+
+    new_status = not note.get("is_bookmarked", False)
+
+    notes_collection.update_one(
+        {"_id": ObjectId(note_id)},
+        {"$set": {"is_bookmarked": new_status}}
+    )
+
+    return {"is_bookmarked": new_status}
+
+
+# 🔹 Get Notes
+@router.get("/user/{user_id}")
 def get_notes(user_id: str):
     notes = notes_collection.find({"user_id": user_id})
-    return [note_serializer(n) for n in notes]
+
+    result = []
+    for n in notes:
+        result.append({
+            "id": str(n["_id"]),
+            "title": n["title"],
+            "subject": n.get("subject", "General"),
+            "is_bookmarked": n.get("is_bookmarked", False)
+        })
+
+    return result
 
 
-# 🔹 View File (OPEN in browser)
+# 🔹 View Note
 @router.get("/view/{note_id}")
 def view_note(note_id: str):
     note = notes_collection.find_one({"_id": ObjectId(note_id)})
-
-    if not note:
-        raise HTTPException(status_code=404, detail="Note not found")
-
-    file_path = note["filepath"]
-    mime_type, _ = mimetypes.guess_type(file_path)
-
-    return FileResponse(
-        path=file_path,
-        media_type=mime_type or "application/octet-stream"
-    )
+    return FileResponse(note["filepath"])
 
 
 # 🔹 Delete Note
-@router.delete("/{note_id}")
+@router.delete("/delete/{note_id}")
 def delete_note(note_id: str):
     note = notes_collection.find_one({"_id": ObjectId(note_id)})
-
-    if not note:
-        raise HTTPException(status_code=404, detail="Note not found")
 
     if os.path.exists(note["filepath"]):
         os.remove(note["filepath"])
 
     notes_collection.delete_one({"_id": ObjectId(note_id)})
 
-    return {"message": "Deleted successfully"}
+    return {"message": "Deleted"}

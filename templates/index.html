@@ -3,29 +3,23 @@
 <head>
 <title>Student Notes App</title>
 
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
 <style>
 body {
     margin: 0;
     font-family: 'Segoe UI', sans-serif;
-    background: #f1f5f9;
+    background: #eef2f7;
 }
 
-/* 🔹 Navbar */
 .navbar {
     background: linear-gradient(90deg,#4f46e5,#3b82f6);
     color: white;
-    padding: 12px 25px;
+    padding: 12px 20px;
     display: flex;
     justify-content: space-between;
-    align-items: center;
 }
 
-.nav-links span {
-    margin-right: 20px;
-    cursor: pointer;
-}
-
-/* Profile */
 .profile {
     position: relative;
     cursor: pointer;
@@ -41,86 +35,80 @@ body {
     right: 0;
     top: 45px;
     background: white;
-    color: black;
     padding: 10px;
     border-radius: 8px;
     display: none;
 }
 
-.dropdown button {
-    background: red;
-    color: white;
-    border: none;
-    padding: 8px;
-    width: 100%;
-}
-
-/* Container */
 .container {
-    max-width: 900px;
+    max-width: 700px;
     margin: 30px auto;
+    padding: 10px;
 }
 
-/* Sections */
+.card {
+    background: white;
+    padding: 18px;
+    border-radius: 12px;
+    margin-bottom: 15px;
+}
+
 .section { display: none; }
 .active { display: block; }
 
-/* Card */
-.card {
-    background: white;
-    padding: 20px;
-    border-radius: 12px;
-    margin-bottom: 20px;
-}
-
-/* Inputs */
-input, button {
+input {
     width: 100%;
     padding: 10px;
     margin-top: 10px;
 }
 
 button {
+    padding: 6px 10px;
+    border-radius: 6px;
     border: none;
-    border-radius: 8px;
     cursor: pointer;
+    margin-left: 5px;
 }
 
-/* Buttons */
-.primary { background:#4f46e5; color:white; }
-.view { background:green; color:white; }
-.delete { background:red; color:white; }
+.primary { background:#4f46e5; color:white; width: 100%; }
+.view { background:#22c55e; color:white; }
+.delete { background:#ef4444; color:white; }
 
-/* Auth */
+.note {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
 .auth-box {
-    max-width: 400px;
-    margin: 80px auto;
+    max-width: 350px;
+    margin: 60px auto;
     background: white;
-    padding: 25px;
-    border-radius: 12px;
+    padding: 20px;
+    border-radius: 10px;
 }
 
-/* Tabs */
 .tabs {
     display: flex;
     margin-bottom: 10px;
 }
 
-.tabs button {
-    flex: 1;
-    padding: 10px;
-    cursor: pointer;
-}
+.tabs button { flex: 1; }
 
 .active-tab {
     background: #4f46e5;
     color: white;
 }
 
-/* Messages */
-.msg {
-    margin-top: 10px;
-    font-weight: 500;
+.msg { margin-top: 10px; }
+
+.menu {
+    display:none;
+    position:absolute;
+    right:0;
+    background:white;
+    padding:10px;
+    border-radius:8px;
 }
 </style>
 
@@ -128,12 +116,11 @@ button {
 
 <body>
 
-<!-- 🔹 Navbar -->
 <div id="navbar" class="navbar" style="display:none;">
-    <div class="nav-links">
-        <span onclick="showSection('upload')">Upload</span>
-        <span onclick="showSection('notes')">View</span>
-        <span onclick="showSection('about')">About</span>
+    <div>
+        <span onclick="showSection('upload')" style="cursor:pointer;">Upload</span>
+        <span onclick="showSection('notes')" style="margin-left:10px; cursor:pointer;">Notes</span>
+        <span onclick="showSection('about')" style="margin-left:10px; cursor:pointer;">About</span>
     </div>
 
     <div class="profile" onclick="toggleDropdown()">
@@ -145,7 +132,6 @@ button {
     </div>
 </div>
 
-<!-- 🔹 AUTH -->
 <div id="auth" class="auth-box">
 
     <div class="tabs">
@@ -153,14 +139,12 @@ button {
         <button id="signupTab" onclick="switchTab('signup')">Signup</button>
     </div>
 
-    <!-- Login -->
     <div id="loginForm">
         <input id="loginEmail" placeholder="Email">
         <input id="loginPassword" type="password" placeholder="Password">
         <button class="primary" onclick="login()">Login</button>
     </div>
 
-    <!-- Signup -->
     <div id="signupForm" style="display:none;">
         <input id="signupEmail" placeholder="Email">
         <input id="signupPassword" type="password" placeholder="Password">
@@ -168,16 +152,15 @@ button {
     </div>
 
     <p id="msg" class="msg"></p>
-
 </div>
 
-<!-- 🔹 MAIN APP -->
 <div id="app" class="container" style="display:none;">
 
     <!-- Upload -->
     <div id="upload" class="section active card">
         <h3>Upload Notes</h3>
         <input id="title" placeholder="Title">
+        <input id="subject" placeholder="Enter Subject (e.g. DBMS)"> <!-- NEW -->
         <input type="file" id="file">
         <button class="primary" onclick="upload()">Upload</button>
         <p id="uploadMsg" class="msg"></p>
@@ -185,40 +168,67 @@ button {
 
     <!-- Notes -->
     <div id="notes" class="section card">
-        <h3>My Notes</h3>
+
+        <div style="display:flex; justify-content:space-between;">
+            <h3>Notes</h3>
+
+            <div style="position:relative;">
+                <span onclick="toggleMenu()" style="cursor:pointer;">⋮</span>
+
+                <div id="menuDropdown" class="menu">
+                    <p onclick="showBookmarks()">⭐ Bookmarks</p>
+                    <p onclick="loadNotes()">All Notes</p>
+                </div>
+            </div>
+        </div>
+
+        <input id="searchInput" placeholder="Search..." onkeyup="filterNotes()">
+
         <div id="notesList"></div>
     </div>
 
-    <!-- About -->
     <div id="about" class="section card">
-        <h3>About</h3>
-        <p>This app helps students upload and access notes anytime.</p>
-    </div>
+    <h3>About</h3>
+
+    <p>
+        The Student Notes App is designed to help students manage their study materials in a simple and organized way. 
+        Instead of searching through scattered files, students can upload and store all their notes in one place.
+    </p>
+
+    <p>
+        Notes can be grouped by subject, making it easy to find what you need quickly. 
+        Important notes can be bookmarked for faster access, especially during exams or revision time.
+    </p>
+
+    <p>
+        With features like search, quick file viewing, and structured organization, this app helps students save time, stay focused, 
+        and keep their study materials well organized.
+    </p>
+
+    <p>
+        Overall, it acts like a personal digital notebook where everything is easy to access, manage, and reuse whenever needed.
+    </p>
+</div>
 
 </div>
 
 <script>
-let userId = "";
-let userEmail = "";
+let userId="";
+let allNotes=[];
 
-/* Tabs */
 function switchTab(tab){
-    loginForm.style.display = tab === "login" ? "block" : "none";
-    signupForm.style.display = tab === "signup" ? "block" : "none";
-
-    loginTab.classList.toggle("active-tab", tab==="login");
-    signupTab.classList.toggle("active-tab", tab==="signup");
-
-    msg.innerText="";
+    loginForm.style.display = tab==="login"?"block":"none";
+    signupForm.style.display = tab==="signup"?"block":"none";
 }
 
-/* Dropdown */
 function toggleDropdown(){
-    let d = dropdown;
-    d.style.display = d.style.display === "block" ? "none" : "block";
+    dropdown.style.display = dropdown.style.display==="block"?"none":"block";
 }
 
-/* Sections */
+function toggleMenu(){
+    menuDropdown.style.display = menuDropdown.style.display==="block"?"none":"block";
+}
+
 function showSection(id){
     document.querySelectorAll(".section").forEach(s=>s.classList.remove("active"));
     document.getElementById(id).classList.add("active");
@@ -226,7 +236,6 @@ function showSection(id){
     if(id==="notes") loadNotes();
 }
 
-/* Signup */
 async function signup(){
     let res = await fetch("/auth/signup", {
         method:"POST",
@@ -238,17 +247,9 @@ async function signup(){
     });
 
     let data = await res.json();
-
-    if(!res.ok){
-        msg.innerText = data.detail;
-        msg.style.color = "red";
-    } else {
-        msg.innerText = "Signup successful, now login";
-        msg.style.color = "green";
-    }
+    msg.innerText = data.detail || "Signup successful";
 }
 
-/* Login */
 async function login(){
     let res = await fetch("/auth/login", {
         method:"POST",
@@ -263,92 +264,150 @@ async function login(){
 
     if(!res.ok){
         msg.innerText = data.detail;
-        msg.style.color = "red";
         return;
     }
 
     userId = data.user_id;
-    userEmail = data.email;
 
     auth.style.display="none";
     app.style.display="block";
     navbar.style.display="flex";
 
-    document.getElementById("userEmail").innerText = userEmail;
+    document.getElementById("userEmail").innerText = data.email;
 }
 
-/* Logout */
 function logout(){
-    userId="";
     auth.style.display="block";
     app.style.display="none";
     navbar.style.display="none";
 }
 
-/* Upload */
 async function upload(){
-    let msgBox = uploadMsg;
 
-    if(!title.value || !file.files[0]){
-        msgBox.innerText = "Enter title and file";
-        msgBox.style.color = "red";
+    if(!title.value || !subject.value || !file.files[0]){
+        uploadMsg.innerText = "Please fill all fields";
+        uploadMsg.style.color = "red";
         return;
     }
 
-    msgBox.innerText = "Uploading...";
-    msgBox.style.color = "blue";
+    uploadMsg.innerText = "Uploading...";
+    uploadMsg.style.color = "blue";
 
-    let formData = new FormData();
-    formData.append("title", title.value);
-    formData.append("file", file.files[0]);
-    formData.append("user_id", userId);
+    let f = new FormData();
+    f.append("title",title.value);
+    f.append("subject",subject.value);
+    f.append("file",file.files[0]);
+    f.append("user_id",userId);
 
-    let res = await fetch("/notes/upload", {
-        method:"POST",
-        body:formData
-    });
+    try {
+        let res = await fetch("/notes/upload",{
+            method:"POST",
+            body:f
+        });
 
-    if(res.ok){
-        msgBox.innerText = "✅ Uploaded successfully!";
-        msgBox.style.color = "green";
-        title.value="";
-        file.value="";
-    } else {
-        msgBox.innerText = "Upload failed";
-        msgBox.style.color = "red";
+        if(res.ok){
+            uploadMsg.innerText = "Uploaded successfully ✅";
+            uploadMsg.style.color = "green";
+
+            // clear inputs
+            title.value="";
+            subject.value="";
+            file.value="";
+
+            loadNotes();
+        } else {
+            uploadMsg.innerText = "Upload failed ❌";
+            uploadMsg.style.color = "red";
+        }
+
+    } catch(err){
+        uploadMsg.innerText = "Server error ❌";
+        uploadMsg.style.color = "red";
+        console.log(err);
     }
 }
 
-/* Load notes */
 async function loadNotes(){
-    let res = await fetch(`/notes/${userId}`);
+    let res = await fetch(`/notes/user/${userId}`);
     let data = await res.json();
+    allNotes = data;
+    renderNotes(data);
+}
+
+/* 🔥 SUBJECT GROUPING */
+function renderNotes(notes){
+
+    let grouped = {};
+
+    notes.forEach(n=>{
+        let sub = n.subject || "General";
+
+        if(!grouped[sub]){
+            grouped[sub] = [];
+        }
+        grouped[sub].push(n);
+    });
 
     let html="";
-    data.forEach(n=>{
-        html += `
-        <div class="card">
-            ${n.title}
-            <div>
-                <button class="view" onclick="view('${n.id}')">View</button>
-                <button class="delete" onclick="del('${n.id}')">Delete</button>
-            </div>
-        </div>`;
-    });
+
+    for(let subject in grouped){
+
+        html += `<h4 style="margin-top:15px;">📁 ${subject}</h4>`;
+
+        grouped[subject].forEach(n=>{
+            html+=`
+            <div class="card note">
+                <div>${n.title}</div>
+
+                <div>
+                    <span onclick="toggleBookmark('${n.id}')" style="cursor:pointer;">
+                        ${n.is_bookmarked ? "⭐":"☆"}
+                    </span>
+
+                    <button class="view" onclick="view('${n.id}')">View</button>
+                    <button class="delete" onclick="del('${n.id}')">Delete</button>
+                </div>
+            </div>`;
+        });
+    }
 
     notesList.innerHTML = html;
 }
 
-/* View */
+async function toggleBookmark(id){
+    let res = await fetch(`/notes/bookmark/${id}`, {method:"PUT"});
+
+    if(res.ok){
+        let data = await res.json();
+
+        allNotes = allNotes.map(n=>{
+            if(n.id===id){
+                n.is_bookmarked = data.is_bookmarked;
+            }
+            return n;
+        });
+
+        renderNotes(allNotes);
+    }
+}
+
+function filterNotes(){
+    let k=searchInput.value.toLowerCase();
+    let f=allNotes.filter(n=>n.title.toLowerCase().includes(k));
+    renderNotes(f);
+}
+
+function showBookmarks(){
+    let f=allNotes.filter(n=>n.is_bookmarked);
+    renderNotes(f);
+}
+
 function view(id){
     window.open(`/notes/view/${id}`);
 }
 
-/* Delete */
 async function del(id){
-    if(!confirm("Delete this note?")) return;
-
-    await fetch(`/notes/${id}`, {method:"DELETE"});
+    await fetch(`/notes/delete/${id}`, {method:"DELETE"});
     loadNotes();
 }
 </script>
